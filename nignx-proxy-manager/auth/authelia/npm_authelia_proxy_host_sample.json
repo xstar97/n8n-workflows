@@ -1,0 +1,366 @@
+{
+  "name": "npm-authelia-proxy-host-sample",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        560,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "={{$json[\"proxy_host_x\"]}}"
+      },
+      "name": "read-host-x-conf",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        740,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "setAllData": false,
+        "options": {}
+      },
+      "name": "get-host-x",
+      "type": "n8n-nodes-base.moveBinaryData",
+      "typeVersion": 1,
+      "position": [
+        900,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "var get_data = $node[\"SplitInBatches\"].json;\nconst fileData = items.map(item => `${item.json.data.replace(\"authelia-api-verify\", get_data.authelia).replace(/_change/g, get_data.name).replace(\"ip_+\", get_data.ip).replace(\"{auth}\", get_data.auth_uri).replace(\"real-ip-from\", get_data.real_ip)}`)\n\nreturn [\n  {\n    json: {\n      name: get_data.name,\n      id: get_data.id,\n      advanced_config: fileData.join(\"\\n\"),\n    }\n  }\n]"
+      },
+      "name": "Convert Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        580,
+        380
+      ],
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$json[\"npm_uri\"]}}/api/tokens",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "identity",
+              "value": "={{$json[\"npm_auth\"][\"email\"]}}"
+            },
+            {
+              "name": "secret",
+              "value": "={{$json[\"npm_auth\"][\"pass\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "post-npm-token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        880,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://10.0.0.200:81/api/nginx/proxy-hosts",
+        "options": {},
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "authorization",
+              "value": "=Bearer {{$json[\"token\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "get-proxy-hosts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "var list=[];\nvar config_data = $node[\"get-config-data\"].json;\nvar dataList = items[0].json;\nvar filterList = config_data.proxy_hosts;\n\nvar authelia = config_data.authelia;\nvar real_ip = config_data.real_ip_from;\nvar auth_uri = config_data.auth_uri;\n\nfunction arrayMatch(arr1, arr2) {\n  var arr = [];  // Array to contain match elements\n  for(var i=0 ; i<arr1.length ; ++i) {\n    for(var j=0 ; j<arr2.length ; ++j) {\n      if(arr1[i] == arr2[j]) {    // If element is in both the arrays\n        arr.push(arr1[i]);        // Push to arr array\n      }\n    }\n  }\n   \n  return arr;  // Return the arr elements\n}\n\nfor (var i = 0; i < dataList.length; i++) {\n  var data = dataList[i];\n  var id = data.id;\n  var domain_names = data.domain_names;\n  var http = data.forward_scheme;\n  var host = data.forward_host;\n  var port = data.forward_port;\n  var name = arrayMatch(domain_names, filterList);\n  if(name.length !== 0)\n  list.push(\n    {\n      id: id,\n      authelia: authelia,\n      name: name[0].split(\".\")[0],\n      domain: `https://${data.domain_names[0]}`,\n      auth_uri: auth_uri,\n      ip: `${http}://${host}:${port}`,\n      real_ip: real_ip,\n      proxy_host_x: config_data.proxy_host_x\n    }\n  )\n  else\n  console.log(`data: host: ${http}://${host}:${port}`);\n}\nreturn list;"
+      },
+      "name": "get-data-list",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "PUT",
+        "url": "={{$node[\"get-config-data\"].json[\"npm_uri\"]}}/api/nginx/proxy-hosts/{{$json[\"id\"]}}",
+        "options": {
+          "bodyContentType": "json"
+        },
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "advanced_config",
+              "value": "={{$json[\"advanced_config\"]}}"
+            }
+          ]
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "authorization",
+              "value": "=Bearer {{$node[\"post-npm-token\"].json[\"token\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "update-proxy-hosts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        380
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "\nreturn [\n   {\n      //set authelia's IP and port \n      \"authelia\":\"http://0.0.0.0:9091\",\n      //match your home network...192, 178, 10..etc\n      \"real_ip_from\":\"0.0.0.0/16\",\n      //auth uri that used for authelia\n\t  \"auth_uri\": \"auth.MY_DOMAIN.com\",\n     //npm IP:PORT\n\t  \"npm_uri\": \"http://0.0.0.0:81\",\n     //NPM BASIC AUTH, can be admin or specific user\n\t  \"npm_auth\":\n\t  {\n\t\t  \"email\": \"email@email.com\",\n\t\t  \"pass\": \"changeme\"\n\t  },\n     //Set the location to point to the proxy_host_x.conf\n\t  \"proxy_host_x\":\"/media/auth/proxy_host_x.conf\",\n     //set it to false, \"\", or null if you do not wish to use the discord webhook\n     \"discord_web_hook\": null,\n     //create a js string array of all the domains you want to add authelia too.\n     \"proxy_hosts\":[\n         \"adguard.mydomain.com\",\n         \"bazarr.mydomain.com\"\n      ]\n   }\n]"
+      },
+      "name": "get-config-data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        720,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": true,
+              "value2": "={{$node[\"SplitInBatches\"].context[\"noItemsLeft\"]}}"
+            },
+            {
+              "value1": "={{$node[\"get-config-data\"].json[\"discord_web_hook\"].includes(\"https://\")}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "check-if-batch-is-done",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        740,
+        580
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "webhookUri": "={{$node[\"get-config-data\"].json[\"discord_web_hook\"]}}",
+        "text": "NPM proxy hosts has been updated!",
+        "options": {
+          "embeds": "=[\n    {\n      \"type\": \"rich\",\n      \"title\": \"Nginx Proxy Manager Proxy-Hosts\",\n      \"description\": \"The following proxy-hosts advanced config has been updated.\",\n      \"fields\": {{$json[\"list\"]}}\n    }\n  ]"
+        }
+      },
+      "name": "Discord",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const allData = []\n\nfunction data(mod,domain){\n  return {\"name\": `last modified on ${mod}`, \"value\": `https://${domain}`};\n}\n\nlet counter = 0;\ndo {\n  try {\n    const items = $items(\"update-proxy-hosts\", 0, counter).map(item => data(item.json.modified_on,item.json.domain_names[0]));\n    allData.push.apply(allData, items);\n  } catch (error) {\n    return {list: JSON.stringify(allData)};  \n  }\n\n  counter++;\n} while(true);"
+      },
+      "name": "merge-data",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        900,
+        580
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "read-host-x-conf": {
+      "main": [
+        [
+          {
+            "node": "get-host-x",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-host-x": {
+      "main": [
+        [
+          {
+            "node": "Convert Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Data": {
+      "main": [
+        [
+          {
+            "node": "update-proxy-hosts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "read-host-x-conf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "post-npm-token": {
+      "main": [
+        [
+          {
+            "node": "get-proxy-hosts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-proxy-hosts": {
+      "main": [
+        [
+          {
+            "node": "get-data-list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-data-list": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "update-proxy-hosts": {
+      "main": [
+        [
+          {
+            "node": "check-if-batch-is-done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-config-data": {
+      "main": [
+        [
+          {
+            "node": "post-npm-token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-if-batch-is-done": {
+      "main": [
+        [
+          {
+            "node": "merge-data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "merge-data": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "get-config-data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": 47,
+  "tags": []
+}
