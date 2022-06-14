@@ -1,0 +1,473 @@
+{
+  "name": "npm-backup-sample",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$node[\"set-config-data\"].json[\"npm_uri\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"base\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"tokens\"]}}",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "identity",
+              "value": "={{$json[\"npm_auth\"][\"email\"]}}"
+            },
+            {
+              "name": "secret",
+              "value": "={{$json[\"npm_auth\"][\"pass\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "post-npm-token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        700,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$node[\"set-config-data\"].json[\"npm_uri\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"base\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"users\"]}}",
+        "options": {
+          "splitIntoItems": false
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "authorization",
+              "value": "=Bearer {{$node[\"post-npm-token\"].json[\"token\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "get-users",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        840,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$node[\"set-config-data\"].json[\"npm_uri\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"base\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"proxy-hosts\"]}}",
+        "options": {
+          "splitIntoItems": false
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "authorization",
+              "value": "=Bearer {{$node[\"post-npm-token\"].json[\"token\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "get-proxy-hosts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        560,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [\n  {\n   \"npm_uri\":\"http://IP:PORT\",\n   \"npm_auth\":{\n      \"email\":\"email@gemail.com\",\n      \"pass\":\"changeme\"\n   },\n   \"npm_api_routes\":{\n     \"base\":\"/api\",\n     \"tokens\": \"/tokens\",\n     \"users\": \"/users\",\n     \"proxy-hosts\": \"/nginx/proxy-hosts\",\n     \"redirection-hosts\": \"/nginx/redirection-hosts\",\n     \"dead-hosts\": \"/nginx/dead-hosts\",\n     \"certificates\": \"/nginx/certificates\",\n     \"access-list\": \"/nginx/access-lists\",\n     \"settings\": \"/settings\"\n      },\n      \"discord_web_hook\": \"\"\n  }\n]"
+      },
+      "name": "set-config-data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        560,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$node[\"set-config-data\"].json[\"npm_uri\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"base\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"certificates\"]}}",
+        "options": {
+          "splitIntoItems": false
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "authorization",
+              "value": "=Bearer {{$node[\"post-npm-token\"].json[\"token\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "get-certs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        840,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$node[\"set-config-data\"].json[\"npm_uri\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"base\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"settings\"]}}",
+        "options": {
+          "splitIntoItems": false
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "authorization",
+              "value": "=Bearer {{$node[\"post-npm-token\"].json[\"token\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "get-settings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        560,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$node[\"set-config-data\"].json[\"npm_uri\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"base\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"redirection-hosts\"]}}",
+        "options": {
+          "splitIntoItems": false
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "authorization",
+              "value": "=Bearer {{$node[\"post-npm-token\"].json[\"token\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "get-redirection-hosts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        980,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$node[\"set-config-data\"].json[\"npm_uri\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"base\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"access-list\"]}}",
+        "options": {
+          "splitIntoItems": false
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "authorization",
+              "value": "=Bearer {{$node[\"post-npm-token\"].json[\"token\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "get-access-list",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        980,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$node[\"set-config-data\"].json[\"npm_uri\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"base\"]}}{{$node[\"set-config-data\"].json[\"npm_api_routes\"][\"dead-hosts\"]}}",
+        "options": {
+          "splitIntoItems": false
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "authorization",
+              "value": "=Bearer {{$node[\"post-npm-token\"].json[\"token\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "get-dead-hosts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        700,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "var userList=[];\n\nvar getUsers = $node[\"get-users\"].json;\nvar getRedirectHosts = $node[\"get-redirection-hosts\"].json;\nvar getProxyHosts = $node[\"get-proxy-hosts\"].json;\nvar getDeadHosts = $node[\"get-dead-hosts\"].json;\nvar getCerts = $node[\"get-certs\"].json;\nvar getAccessList = $node[\"get-access-list\"].json;\nvar getSettings = $node[\"get-settings\"].json;\n\nfor(user in getUsers){\n  var redirecList = getRedirectHosts.filter(redirectHost => redirectHost.owner_user_id == getUsers[user].id);\n  var proxyList = getProxyHosts.filter(proxyHost => proxyHost.owner_user_id == getUsers[user].id);\n  var deadList = getDeadHosts.filter(deadHost => deadHost.owner_user_id == getUsers[user].id);\n  \n  var certList = getCerts.filter(cert => cert.owner_user_id == getUsers[user].id);\n  var accessList = getAccessList.filter(accessList => accessList.owner_user_id == getUsers[user].id);\n  var settings = getSettings.filter(settings => settings.owner_user_id == getUsers[user].id);\n  \n  userList.push(\n    {\n      \"id\": getUsers[user].id,\n      \"created_on\": getUsers[user].created_on,\n      \"modified_on\": getUsers[user].modified_on,\n      \"is_disabled\": getUsers[user].is_disabled,\n      \"email\": getUsers[user].email,\n      \"name\": getUsers[user].name,\n      \"nickname\": getUsers[user].nickname,\n      \"avatar\": getUsers[user].avatar,\n      \"hosts\": {\n        \"redirection-hosts\": redirecList,\n        \"proxy-hosts\": proxyList,\n        \"dead-hosts\": deadList\n      },\n      \"roles\": getUsers[user].roles,\n      \"certs\": certList,\n      \"accessList\": accessList,\n      \"settings\": settings\n    }\n)\n}\nvar date = new Date().toISOString().replace(/:/g, \"-\");\nvar data  ={\n  users: userList\n  };\nreturn {\n  fileName: `${date.substring(0, date.lastIndexOf('.'))}.json`,\n  data: JSON.stringify(data, null, 2)}"
+      },
+      "name": "mux-data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        700,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "jsonToBinary",
+        "convertAllData": false,
+        "options": {
+          "encoding": "utf8",
+          "addBOM": true,
+          "fileName": "={{$node[\"mux-data\"].json[\"fileName\"]}}",
+          "keepSource": true,
+          "mimeType": "application/json",
+          "useRawData": true
+        }
+      },
+      "name": "data-json-binary",
+      "type": "n8n-nodes-base.moveBinaryData",
+      "typeVersion": 1,
+      "position": [
+        840,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "fileName": "=/media/npm/backups/ {{$node[\"data-json-binary\"].binary.data.fileName}}"
+      },
+      "name": "write-backup-data",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        980,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 6
+            }
+          ]
+        }
+      },
+      "name": "Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        420,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "webhookUri": "={{$node[\"set-config-data\"].json[\"discord_web_hook\"]}}",
+        "text": "Hello Noob!",
+        "options": {
+          "embeds": "=[\n    {\n      \"type\": \"rich\",\n      \"title\": \"NPM data backed up\",\n      \"description\": \"timestamp: {{$node[\"write-backup-data\"].binary.data.fileName.split(\".json\")[0]}}\"\n    }\n  ]"
+        }
+      },
+      "name": "Discord",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$node[\"set-config-data\"].json[\"discord_web_hook\"].includes(\"https://\")}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "IF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        640
+      ]
+    }
+  ],
+  "connections": {
+    "post-npm-token": {
+      "main": [
+        [
+          {
+            "node": "get-users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-users": {
+      "main": [
+        [
+          {
+            "node": "get-redirection-hosts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-proxy-hosts": {
+      "main": [
+        [
+          {
+            "node": "get-dead-hosts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set-config-data": {
+      "main": [
+        [
+          {
+            "node": "post-npm-token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-certs": {
+      "main": [
+        [
+          {
+            "node": "get-access-list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-settings": {
+      "main": [
+        [
+          {
+            "node": "mux-data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-redirection-hosts": {
+      "main": [
+        [
+          {
+            "node": "get-proxy-hosts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-access-list": {
+      "main": [
+        [
+          {
+            "node": "get-settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-dead-hosts": {
+      "main": [
+        [
+          {
+            "node": "get-certs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mux-data": {
+      "main": [
+        [
+          {
+            "node": "data-json-binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "data-json-binary": {
+      "main": [
+        [
+          {
+            "node": "write-backup-data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "write-backup-data": {
+      "main": [
+        [
+          {
+            "node": "IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron": {
+      "main": [
+        [
+          {
+            "node": "set-config-data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": 51,
+  "tags": []
+}
