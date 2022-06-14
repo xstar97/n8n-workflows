@@ -90,7 +90,7 @@
     },
     {
       "parameters": {
-        "url": "http://10.0.0.200:81/api/nginx/proxy-hosts",
+        "url": "={{$node[\"get-config-data\"].json[\"npm_uri\"]}}/api/nginx/proxy-hosts",
         "options": {},
         "headerParametersUi": {
           "parameter": [
@@ -156,7 +156,7 @@
     },
     {
       "parameters": {
-        "functionCode": "\nreturn [\n   {\n      //set authelia's IP and port \n      \"authelia\":\"http://0.0.0.0:9091\",\n      //match your home network...192, 178, 10..etc\n      \"real_ip_from\":\"0.0.0.0/16\",\n      //auth uri that used for authelia\n\t  \"auth_uri\": \"auth.MY_DOMAIN.com\",\n     //npm IP:PORT\n\t  \"npm_uri\": \"http://0.0.0.0:81\",\n     //NPM BASIC AUTH, can be admin or specific user\n\t  \"npm_auth\":\n\t  {\n\t\t  \"email\": \"email@email.com\",\n\t\t  \"pass\": \"changeme\"\n\t  },\n     //Set the location to point to the proxy_host_x.conf\n\t  \"proxy_host_x\":\"/media/auth/proxy_host_x.conf\",\n     //set it to false, \"\", or null if you do not wish to use the discord webhook\n     \"discord_web_hook\": null,\n     //create a js string array of all the domains you want to add authelia too.\n     \"proxy_hosts\":[\n         \"adguard.mydomain.com\",\n         \"bazarr.mydomain.com\"\n      ]\n   }\n]"
+        "functionCode": "\nreturn [\n   {\n      \"authelia\":\"http://0.0.0.0:9091\", // set authelia's IP and port\n      \"real_ip_from\":\"0.0.0.0/16\", // match your home network...192, 178, 10..etc\n      \"auth_uri\":\"auth.MY_DOMAIN.com\", // auth uri that used for authelia\n      \"npm_uri\":\"http://0.0.0.0:81\", // npm IP:PORT\n      \"npm_auth\":{ // NPM BASIC AUTH, can be admin or specific user\n         \"email\":\"email@email.com\",\n         \"pass\":\"changeme\"\n      },\n      \"proxy_host_x\":\"/media/auth/proxy_host_x.conf\", // Set the location to point to the proxy_host_x.conf\n      \"discord_web_hook\":null, //set it to false, \"\", or null if you do not wish to use the discord webhook\n      \"proxy_hosts\":[ //create a js string array of all the domains you want to add authelia too., this is the filter list\n         \"adguard.mydomain.com\",\n         \"bazarr.mydomain.com\"\n      ]\n   }\n]"
       },
       "name": "get-config-data",
       "type": "n8n-nodes-base.function",
