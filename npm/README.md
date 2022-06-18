@@ -33,6 +33,8 @@ TBD
 
 This [workflow](/npm/workflows/npm_nginx_authelia_config_sample.json) automates the process of creating authelia's advanced nginx confs for each proxy host and then uploading it directly to NPM through the rest API.
 
+just download the [proxy_host_x.conf](/npm/workflows/proxy_host_x.conf) and place it in a dir where the n8n workflow can access.
+
 note:
 I reccomend looking into this [guide](https://dbt3ch.com/books/authelia-for-nginx-proxy-manager) for authelia.
 
